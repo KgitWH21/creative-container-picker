@@ -110,6 +110,46 @@
     @keyframes pulse{0%,100%{box-shadow:0 0 8px rgba(255,178,62,.85)}45%{box-shadow:0 0 0 7px rgba(255,178,62,0);background:#FFF}}
     .ch.flash .value{animation:strike .32s ease-out}
     .ch.flash.live .lamp{animation:pulse .45s ease-out}
+    .ch.pinned .sw input:disabled{opacity:.72;cursor:not-allowed}
+
+    /* ---- mode switch ---- */
+    .plate-right{display:flex;flex-direction:column;align-items:flex-end;gap:14px;flex-shrink:0}
+    .modes{display:flex;border:1px solid #7E7C6E;border-radius:2px;overflow:hidden}
+    .mode{font-family:var(--f-label);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+      background:var(--panel-low);color:var(--ink-2);border:0;padding:8px 15px}
+    .mode+.mode{border-left:1px solid #7E7C6E}
+    .mode[aria-pressed="true"]{background:var(--amber);color:var(--screen);font-weight:700}
+    .mode-note{font-family:var(--f-label);font-size:10px;letter-spacing:.1em;color:var(--ink-2);margin:0;text-align:right;max-width:34ch}
+
+    /* ---- chips, verdicts ---- */
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+    .chip{font-family:var(--f-label);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+      border:1px solid #4A4331;color:var(--amber-dim);padding:4px 9px;border-radius:2px}
+    .chip.warn{border-color:#7A3A22;color:#E08A5E;text-transform:none;letter-spacing:.04em}
+    .chip:empty{display:none}
+    .verdicts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid #35301F}
+    .vk b{font-weight:700;margin-right:7px;color:var(--amber-deep)}
+    .vk[aria-pressed="true"]{background:var(--amber);color:var(--screen);border-color:var(--amber)}
+    .vk[aria-pressed="true"] b{color:var(--screen)}
+    .verdict-hint{font-family:var(--f-label);font-size:10px;letter-spacing:.1em;color:#6B6047;margin:10px 0 0}
+
+    /* ---- log tables ---- */
+    .log-grid{display:grid;gap:22px;margin-top:18px}
+    .log-block h4{margin:0 0 10px;font-family:var(--f-label);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+    .bars{display:grid;gap:5px}
+    .bar{display:grid;grid-template-columns:96px 1fr 62px;gap:10px;align-items:center;font-family:var(--f-label);font-size:11px}
+    .bar i{font-style:normal;letter-spacing:.14em}
+    .bar span{height:9px;background:var(--panel-low);border:1px solid #9C9A8B;position:relative}
+    .bar span::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--w,0%);background:var(--amber-deep)}
+    .bar em{font-style:normal;text-align:right;color:var(--ink-2);letter-spacing:.06em}
+    .rbar{display:grid;grid-template-columns:44px 110px 1fr;gap:12px;align-items:center;font-family:var(--f-label);font-size:11px}
+    .rbar b{text-align:right;letter-spacing:.06em}
+    .rbar span{height:9px;background:var(--panel-low);border:1px solid #9C9A8B;position:relative}
+    .rbar span::before{content:"";position:absolute;inset:0 auto 0 0;width:var(--w,0%);background:#8A6A5E}
+    .rbar i{font-style:normal;font-family:var(--f-body);font-size:13px;color:var(--ink)}
+    .tally{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--f-label);font-size:12px}
+    .tally b{font-size:20px;display:block;letter-spacing:-.01em}
+    .tally span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2)}
 
     /* ---- drawers ---- */
     .drawer{padding:0}
@@ -172,7 +212,14 @@
       <h1>Creative Container Picker</h1>
       <p class="tagline">Experiment with creative forms</p>
     </div>
-    <p class="count"><b id="combos">—</b><span>possible containers</span></p>
+    <div class="plate-right">
+      <div class="modes" role="group" aria-label="Generator mode">
+        <button id="modeArt" class="mode" type="button" data-mode="art" aria-pressed="true">Art</button>
+        <button id="modeFormat" class="mode" type="button" data-mode="format" aria-pressed="false">Format</button>
+      </div>
+      <p class="count"><b id="combos">—</b><span>possible containers</span></p>
+      <p id="modeNote" class="mode-note"></p>
+    </div>
   </header>
 
   <noscript><p class="noscript">This tool needs JavaScript enabled in your browser.</p></noscript>
@@ -183,11 +230,19 @@
       <button id="save" class="key on-screen" type="button">Save container</button>
     </div>
     <dl id="spec" class="spec"></dl>
+    <p class="chips"><span id="effort" class="chip"></span><span id="tension" class="chip warn"></span></p>
     <p class="readout"><span id="prompt"></span><span class="caret" aria-hidden="true"></span></p>
     <div class="screen-actions">
       <button id="copyContainer" class="key on-screen" type="button">Copy container</button>
       <button id="copyPrompt" class="key on-screen" type="button">Copy prompt</button>
     </div>
+    <div class="verdicts" role="group" aria-label="Verdict on this container">
+      <button class="key on-screen vk" type="button" data-verdict="no" aria-pressed="false"><b>1</b>No</button>
+      <button class="key on-screen vk" type="button" data-verdict="keep" aria-pressed="false"><b>2</b>Keep</button>
+      <button class="key on-screen vk" type="button" data-verdict="make" aria-pressed="false"><b>3</b>Make</button>
+      <button class="key on-screen vk" type="button" data-verdict="exists" aria-pressed="false"><b>4</b>Exists</button>
+    </div>
+    <p id="verdictHint" class="verdict-hint"></p>
     <p id="status" class="status" role="status" aria-live="polite"></p>
   </section>
 
@@ -200,6 +255,18 @@
 
   <section id="cards" class="strips" aria-label="Container variables"></section>
   <section id="wildCardWrap" aria-label="Optional creative constraint"></section>
+
+  <details id="logDetails" class="unit drawer">
+    <summary>Verdict log <span id="logCount"></span></summary>
+    <div class="drawer-body">
+      <div id="logSummary" class="log-grid"></div>
+      <div class="row" style="margin-top:24px">
+        <button id="exportJson" class="key" type="button">Export JSON</button>
+        <button id="exportCsv" class="key" type="button">Export CSV</button>
+        <button id="clearLog" class="key danger" type="button">Clear log</button>
+      </div>
+    </div>
+  </details>
 
   <details id="savedDetails" class="unit drawer">
     <summary>Saved containers <span id="savedCount"></span></summary>
@@ -257,7 +324,74 @@ const categoryDefinitions = [
   {id:'distribution',label:'Distribution',short:'Distribution',code:'DST',description:'Where and how the work reaches someone.',items:distributions}
 ];
 const wildDefinition = {id:'wild',label:'Wild Card',short:'Constraint',code:'WILD',description:'An optional rule that changes the experiment.',items:wildCards};
-const STORAGE = {saved:'ccp.saved.v1',custom:'ccp.custom.v1'};
+const STORAGE = {saved:'ccp.saved.v1',custom:'ccp.custom.v1',log:'ccp.log.v1',mode:'ccp.mode.v1'};
+
+// ============================================================
+// TAGS — seed lists, edit freely. A value can appear in several.
+// notSerializable: you could not cheaply publish a second one to the same
+// audience through the same channel. Format mode drops these.
+// heavy: expensive enough that "iterate fast" stops being true.
+// ============================================================
+const notSerializable = new Set([
+  'available for one hour','until the battery dies','until one person responds','a box with ten artifacts','one year in fragments','annual ritual','indefinite / evolving','a sequence with no fixed end','a growing collection','expandable archive',
+  'physical installation','live camera obscura',
+  'can only be experienced once','disappears after viewing','trade an artifact with someone','print a clue','enter a password found elsewhere','move between physical locations','walk a route','assemble components','unfold pages','manipulate printed object',
+  'gallery installation','public projection','physical exhibition','gallery experience','staged performance','live reading','listening session','live performance + digital archive','exhibition + downloadable files','live interactive session','pop-up event','one-night-only webpage','temporary installation','hotel-room installation','park-bench plaque','drive-in screening','mail-art exchange','chain letter','geocached artifact','package mailed to recipient','sent to one person','sent to five people','private family archive','gift','handwritten delivery','invitation-only experience','library checkout object','one-copy edition','object left for a stranger','message in a bottle','time capsule','dead drop','sealed envelope','box of artifacts','puzzle box','artist book','shared hard drive','museum audio guide','train-station screen','vending-machine object','capsule toy','printed artifact + AR','physical object + hidden URL','community bulletin board',
+  'destroy one component afterward','allow only one replay','make it impossible to archive completely','make the work deteriorate','release it to five people only','design it for one specific room','make one component disposable'
+]);
+const heavy = new Set([
+  'feature length','40–90 minutes','installation-length','room-sized','wall-sized','building-sized','book-length','album-length','a trilogy','twelve installments','a daily drop for 30 days','one-week experience',
+  'animation','rotoscope-style imagery','generative animation','fake operating system','360-degree panorama','diorama','paper theater','shadow puppetry','satellite imagery','microscope imagery','evolving schematic','database visualization','game interface','surveillance interface','stereoscopic pair','lenticular image','anamorphic image',
+  'orchestral texture','original instrumental score','generative music','music that changes with interaction','binaural audio','spatial audio','continuous ambient score','leitmotifs',
+  'branching choices','create remix','export personalized version','procedural arrangement','construct your own version','build a personal index','evolves across repeated visits','remembers previous visits','solve a small cipher','different experience each visit',
+  'progressive web app','browser extension','game mod','offline kiosk','walking-tour app','vinyl record','livestream','printed book','board-game supplement','interactive fiction file','command-line program'
+]);
+
+// ============================================================
+// COHERENCE — objective conflicts only. Taste is not modelled here.
+// ============================================================
+const T = {
+  noVisual:new Set(['no visual layer','blank screen','single color','static title card']),
+  motion:new Set(['animation','video clip','looping video','slow motion','time lapse','screen recording','desktop capture','first-person camera','abstract motion','generative animation','kinetic typography','animated captions','animated illustration','animated map','animated handwriting','rotoscope-style imagery','moving shadows','live-action footage','silent footage','archival footage','home movies','typewriter reveal','scrolling text','words fading in and out','karaoke-style text tracking','live clock','countdown with no explanation','one-pixel animation','a visual that slowly erases itself','footnotes appearing live','images revealed by scrolling','a cursor with no visible user']),
+  silent:new Set(['silence','room tone']),
+  audioOnly:new Set(['standalone audio file','website audio player','downloadable MP3','podcast feed','private podcast feed','album','EP','audio archive','streaming audio','QR-linked audio','telephone hotline','voicemail box','pirate radio broadcast','sound postcard','headphone station','cassette','vinyl record','CD']),
+  visualOnly:new Set(['poster','broadside','postcard','desktop wallpaper series','screensaver','digital picture frame','e-ink display','sticker trail','temporary tattoo','wearable badge','projection on a window','image carousel','daily lock-screen image','public projection','projection']),
+  printed:new Set(['PDF','EPUB','printed book','chapbook','zine','postcard','poster','broadside','printed card','digital booklet','newspaper insert','classified advertisement','menu insert','matchbook','bookmark','artist book','accordion foldout','deck of cards','sealed envelope','e-ink display','cassette','vinyl record','CD','USB drive','box of artifacts','puzzle box','object left for a stranger','park-bench plaque','time capsule','dead drop','message in a bottle','capsule toy','vending-machine object','receipt printer','sound postcard','board-game supplement','sticker trail','temporary tattoo','wearable badge']),
+  needsSight:new Set(['hover to reveal text','click to reveal annotation','uncover redacted text','scratch-away reveal','inspect marginalia','expand footnotes','zoom into artifacts','browse archive','open folders','reveal documents','navigate map','explore nodes','jump on timeline','choose reading order','drag fragments into a sequence','compare two versions','search within the work','sort by date','sort by emotional intensity','build a personal index','tap hidden elements','choose chapter','choose scene','select characters','select locations','swipe through sequence','page turning','scroll only','rearrange sequence','shuffle sections','trace a route with a finger']),
+  needsSound:new Set(['navigate using sound','listen before text appears','match image to sound','choose soundtrack','randomized soundtrack']),
+  pointer:new Set(['hover to reveal text','click to reveal annotation','scroll only','open two windows side by side','release the mouse to continue','change browser size','navigate using only keyboard','open folders','drag fragments into a sequence','follow links with no back button','search within the work','rotate the device','tilt the device','swipe through sequence','tap hidden elements','zoom into artifacts','jump on timeline','explore nodes','navigate map','browse archive','type a response','upload image','record voice','draw something','scratch-away reveal','uncover redacted text'])
+};
+const RULES = [
+  {a:['visual',T.noVisual],      b:['interaction',T.needsSight], why:'nothing to see, but the interaction is visual'},
+  {a:['audio',T.silent],         b:['interaction',T.needsSound], why:'no sound to navigate by'},
+  {a:['distribution',T.printed], b:['interaction',T.pointer],    why:'a printed object cannot take a screen gesture'},
+  {a:['visual',T.noVisual],      b:['distribution',T.visualOnly],why:'a picture channel carrying no picture'},
+  {a:['audio',T.silent],         b:['distribution',T.audioOnly], why:'an audio channel carrying silence'},
+  {a:['visual',T.motion],        b:['distribution',T.printed],   why:'motion on a surface that cannot move'},
+  {a:['visual',v=>!T.noVisual.has(v)],b:['distribution',T.audioOnly],why:'an audio-only channel cannot carry a visual layer'}
+];
+const matches=(m,v)=>typeof m==='function'?m(v):m.has(v);
+function tensions(){
+  const out=[];
+  for(const r of RULES){
+    const [ca,ma]=r.a,[cb,mb]=r.b;
+    if(!state[ca].use||!state[cb].use)continue;
+    if(matches(ma,state[ca].value)&&matches(mb,state[cb].value))out.push({...r,ca,cb});
+  }
+  return out;
+}
+
+// ============================================================
+// MODES
+// ============================================================
+const MODES = {
+  art:   {label:'Art',   minLive:3, wildChance:.30, serialOnly:false, resolve:false, anchor:null,
+          note:'Anything goes. Contradictions are flagged, not fixed.', ask:'Would you make this?'},
+  format:{label:'Format',minLive:4, wildChance:.18, serialOnly:true,  resolve:true,  anchor:'distribution',
+          note:'Distribution anchored. One-off options dropped, contradictions resolved.', ask:'Could you make twenty of these?'}
+};
+let mode = MODES[localStorage.getItem(STORAGE.mode)] ? localStorage.getItem(STORAGE.mode) : 'art';
+const cfg = () => MODES[mode];
 
 // ============================================================
 // APPLICATION STATE
@@ -274,34 +408,53 @@ const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 // ============================================================
 // GENERATION
 // ============================================================
-const poolFor = d => [...d.items,...(customOptions[d.id]||[])];
+const allOf = d => [...d.items,...(customOptions[d.id]||[])];
+// forRoll narrows the pool to what the current mode is willing to produce.
+const poolFor = (d,forRoll=false) => {const all=allOf(d);return forRoll&&cfg().serialOnly?all.filter(v=>!notSerializable.has(v)):all};
 const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 const signature = () => [...categoryDefinitions,wildDefinition].map(d=>`${state[d.id].use}:${state[d.id].value}`).join('|');
 function reroll(id,{unusual=false}={}){
   const d=[...categoryDefinitions,wildDefinition].find(x=>x.id===id); if(!d)return;
-  const pool=poolFor(d); let candidates=pool;
+  const pool=poolFor(d,true); let candidates=pool;
   if(unusual && pool.length>8) candidates=pool.slice(Math.floor(pool.length*.45));
   if(candidates.length>1){let next=state[id].value;while(next===state[id].value)next=pick(candidates);state[id].value=next}else state[id].value=candidates[0]||'No options';
   changed.add(id);
 }
-const CORE_ON=.72,WILD_ON=.3,MIN_LIVE=3;
+const CORE_ON=.72;
 const liveCount=()=>categoryDefinitions.filter(d=>state[d.id].use).length;
 // Locked channels keep both their value and their on/off state; everything else is up for grabs.
+// The mode's anchor channel is always live and is never the one that yields in a conflict.
 function rollChannels(){
-  const open=categoryDefinitions.filter(d=>!state[d.id].locked);
+  const anchor=cfg().anchor;
+  const open=categoryDefinitions.filter(d=>!state[d.id].locked&&d.id!==anchor);
   open.forEach(d=>state[d.id].use=Math.random()<CORE_ON);
-  if(!state.wild.locked)state.wild.use=Math.random()<WILD_ON;
+  if(anchor)state[anchor].use=true;
+  if(!state.wild.locked)state.wild.use=Math.random()<cfg().wildChance;
   const dark=open.filter(d=>!state[d.id].use);
-  while(liveCount()<MIN_LIVE&&dark.length)state[dark.splice(Math.floor(Math.random()*dark.length),1)[0].id].use=true;
+  while(liveCount()<cfg().minLive&&dark.length)state[dark.splice(Math.floor(Math.random()*dark.length),1)[0].id].use=true;
+}
+// Reroll whichever side of a conflict is allowed to move; switch it off if nothing fits.
+function resolveTensions(){
+  const anchor=cfg().anchor;
+  for(let pass=0;pass<16;pass++){
+    const t=tensions()[0]; if(!t)return true;
+    const movable=[t.ca,t.cb].filter(c=>c!==anchor&&!state[c].locked);
+    if(!movable.length){const off=[t.ca,t.cb].find(c=>c!==anchor)||t.cb;state[off].use=false;continue}
+    const target=pick(movable);
+    if(pass<12)reroll(target); else {state[target].use=false}
+  }
+  return !tensions().length;
 }
 function generate({surprise=false}={}){
+  logSkipped();
   let tries=0;
   do{
     if(surprise){categoryDefinitions.forEach(d=>state[d.id].use=true);state.wild.use=true}else rollChannels();
     [...categoryDefinitions,wildDefinition].forEach(d=>{if(state[d.id].use&&!state[d.id].locked)reroll(d.id,{unusual:surprise})});
+    if(cfg().resolve&&!surprise)resolveTensions();
     tries++;
   }while(signature()===previousSignature&&tries<8);
-  previousSignature=signature();renderAll();
+  previousSignature=signature();startRoll();renderAll();
   announce(surprise?'A stranger container appeared.':`New container · ${liveCount()} of 6 channels live.`);
 }
 
@@ -314,10 +467,103 @@ function snapshot(){return {id:Date.now(),created:new Date().toISOString(),value
 function saveContainer(){const snap=snapshot();savedContainers.unshift(snap);persistSaved();renderSaved();announce('Container saved.');}
 
 // ============================================================
+// VERDICT LOG — your judgement, not the machine's.
+// Explicit verdicts are sparse and reliable; implicit rejects (a single-channel
+// reroll) are plentiful and isolate one variable; dwell is free and weak.
+// ============================================================
+const LOG_CAP=3000,SESSION=Date.now().toString(36);
+const VERDICTS={no:'No',keep:'Keep',make:'Make',exists:'Exists'};
+let log=loadJSON(STORAGE.log,[]);
+let roll={n:0,start:Date.now(),verdict:null,snap:null};
+function persistLog(){try{localStorage.setItem(STORAGE.log,JSON.stringify(log))}catch{log=log.slice(-1000);localStorage.setItem(STORAGE.log,JSON.stringify(log))}}
+function logPush(entry){log.push(entry);if(log.length>LOG_CAP)log=log.slice(-LOG_CAP);persistLog();renderLog()}
+function containerMap(){const o={};activeEntries().forEach(([d,v])=>o[d.code]=v);if(state.wild.use)o.WILD=state.wild.value;return o}
+function startRoll(){const n=roll.n+1;roll={n,rid:`${SESSION}-${n}`,start:Date.now(),verdict:null,snap:containerMap(),mode};}
+function logSkipped(){if(roll.n&&!roll.verdict&&roll.snap)logPush({t:Date.now(),m:roll.mode,k:'skip',d:Date.now()-roll.start,c:roll.snap})}
+function setVerdict(k){
+  if(!VERDICTS[k]||!roll.n)return;
+  if(roll.verdict===k){announce(`Already logged as ${VERDICTS[k].toLowerCase()}.`);return}
+  if(roll.verdict)log=log.filter(e=>e.r!==roll.rid);      // one verdict per roll; last press wins
+  roll.verdict=k;
+  logPush({t:Date.now(),m:mode,k,d:Date.now()-roll.start,c:containerMap(),r:roll.rid});
+  renderVerdicts();announce(`Logged: ${VERDICTS[k].toLowerCase()}.`);
+}
+function logReject(code,value){logPush({t:Date.now(),m:mode,k:'rj',cat:code,v:value})}
+const rolls=()=>log.filter(e=>e.k!=='rj');
+function renderLog(){
+  const root=document.getElementById('logSummary');if(!root)return;
+  const marked=rolls().filter(e=>e.k!=='skip'),rejects=log.filter(e=>e.k==='rj');
+  document.getElementById('logCount').textContent=`(${marked.length})`;
+  if(!log.length){root.innerHTML='<p class="empty">Nothing logged yet. Roll a container and press 1–4.</p>';return}
+  const tally=['make','keep','exists','no','skip'].map(k=>{
+    const n=rolls().filter(e=>e.k===k).length;
+    return `<div><b>${n}</b><span>${k==='skip'?'Skipped':VERDICTS[k]}</span></div>`}).join('');
+  // Which channels survive the containers you would actually build?
+  const wanted=rolls().filter(e=>e.k==='make'||e.k==='keep');
+  const base=rolls().length||1;
+  const bars=[...categoryDefinitions,wildDefinition].map(d=>{
+    const inWanted=wanted.filter(e=>e.c&&e.c[d.code]!==undefined).length;
+    const inAll=rolls().filter(e=>e.c&&e.c[d.code]!==undefined).length;
+    const p=wanted.length?Math.round(inWanted/wanted.length*100):0;
+    const b=Math.round(inAll/base*100);
+    return `<div class="bar"><i>${d.code}</i><span style="--w:${p}%"></span><em>${p}% / ${b}%</em></div>`}).join('');
+  const counts={};rejects.forEach(e=>{counts[e.v]=(counts[e.v]||0)+1});
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10)
+    .map(([v,n])=>`<div class="rbar"><b>${n}×</b><span style="--w:${Math.round(n/Math.max(...Object.values(counts))*100)}%"></span><i>${esc(v)}</i></div>`).join('');
+  const exists=rolls().filter(e=>e.k==='exists').slice(-6).reverse()
+    .map(e=>`<li>${Object.entries(e.c||{}).map(([k,v])=>`<b>${k}</b>${esc(v)}`).join(' · ')}</li>`).join('');
+  root.innerHTML=`
+    <div class="log-block"><h4>Verdicts</h4><div class="tally">${tally}</div></div>
+    <div class="log-block"><h4>Channels live in your makes &amp; keeps (vs all rolls)</h4><div class="bars">${bars}</div>
+      <p class="lib-meta">${wanted.length} marked make or keep. Treat as directional under ~50.</p></div>
+    <div class="log-block"><h4>Most rerolled-away values (${rejects.length} rejects)</h4>
+      <div class="bars">${top||'<p class="empty">Reroll a single channel to start this.</p>'}</div></div>
+    ${exists?`<div class="log-block"><h4>Marked as already existing</h4><ul class="saved-item" style="list-style:none;padding:14px">${exists}</ul></div>`:''}`;
+}
+function renderVerdicts(){
+  document.querySelectorAll('.vk').forEach(b=>b.setAttribute('aria-pressed',String(roll.verdict===b.dataset.verdict)));
+  document.getElementById('verdictHint').textContent=cfg().ask;
+}
+function download(name,text,type){
+  const url=URL.createObjectURL(new Blob([text],{type}));
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+function exportCsv(){
+  const cols=['time','mode','verdict','dwell_ms','SRC','SCL','VIS','AUD','INT','DST','WILD','reject_channel','reject_value'];
+  const q=s=>`"${String(s??'').replace(/"/g,'""')}"`;
+  const rows=log.map(e=>[new Date(e.t).toISOString(),e.m,e.k,e.d??'',...['SRC','SCL','VIS','AUD','INT','DST','WILD'].map(c=>e.c?.[c]??''),e.cat??'',e.v??''].map(q).join(','));
+  download(`ccp-log-${new Date().toISOString().slice(0,10)}.csv`,[cols.join(','),...rows].join('\n'),'text/csv');
+  announce('CSV exported.');
+}
+
+// ============================================================
+// MODE SWITCHING
+// ============================================================
+function setMode(next){
+  if(!MODES[next]||next===mode)return;
+  mode=next;localStorage.setItem(STORAGE.mode,mode);
+  if(cfg().anchor)state[cfg().anchor].use=true;
+  renderMode();renderAll();announce(`${cfg().label} mode.`);
+}
+function renderMode(){
+  document.querySelectorAll('.mode').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+  document.getElementById('modeNote').textContent=cfg().note;
+  renderVerdicts();
+}
+function renderChips(){
+  const live=[...activeEntries().map(([,v])=>v),...(state.wild.use?[state.wild.value]:[])];
+  const n=live.filter(v=>heavy.has(v)).length;
+  document.getElementById('effort').textContent=`Effort: ${n===0?'light':n<3?'medium':'heavy'}`;
+  const t=tensions();
+  document.getElementById('tension').textContent=t.length?`Tension: ${t[0].why}`:'';
+}
+
+// ============================================================
 // RENDERING / UI
 // ============================================================
 const esc=s=>String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-function cardHTML(d,isWild=false){const s=state[d.id];return `<article class="unit ch ${isWild?'aux':''} ${s.use?'live':'off'}" data-card="${d.id}"><div class="ch-code"><span class="lamp" aria-hidden="true"></span><span class="code">${esc(d.code)}</span>${isWild?'<span class="aux-tag">Optional</span>':''}</div><div class="ch-body"><h3 class="value">${esc(s.value)}</h3><p class="description"><b>${esc(d.label)}</b> ${esc(d.description)}</p></div><div class="ch-ctl"><label class="sw"><input type="checkbox" data-action="use" data-id="${d.id}" ${s.use?'checked':''}> Use</label><label class="sw"><input type="checkbox" data-action="lock" data-id="${d.id}" ${s.locked?'checked':''}> Lock</label><button class="reroll" type="button" data-action="reroll" data-id="${d.id}" ${s.use?'':'disabled'} aria-label="Reroll ${esc(d.label)}">Reroll</button></div></article>`}
+function cardHTML(d,isWild=false){const s=state[d.id];const pinned=cfg().anchor===d.id;return `<article class="unit ch ${isWild?'aux':''} ${pinned?'pinned':''} ${s.use?'live':'off'}" data-card="${d.id}"><div class="ch-code"><span class="lamp" aria-hidden="true"></span><span class="code">${esc(d.code)}</span>${isWild?'<span class="aux-tag">Optional</span>':''}${pinned?'<span class="aux-tag">Anchor</span>':''}</div><div class="ch-body"><h3 class="value">${esc(s.value)}</h3><p class="description"><b>${esc(d.label)}</b> ${esc(d.description)}</p></div><div class="ch-ctl"><label class="sw"><input type="checkbox" data-action="use" data-id="${d.id}" ${s.use?'checked':''} ${pinned?'disabled':''}> Use</label><label class="sw"><input type="checkbox" data-action="lock" data-id="${d.id}" ${s.locked?'checked':''}> Lock</label><button class="reroll" type="button" data-action="reroll" data-id="${d.id}" ${s.use?'':'disabled'} aria-label="Reroll ${esc(d.label)}">Reroll</button></div></article>`}
 function renderCards(){
   document.getElementById('cards').innerHTML=categoryDefinitions.map(d=>cardHTML(d)).join('');
   document.getElementById('wildCardWrap').innerHTML=cardHTML(wildDefinition,true);
@@ -342,13 +588,13 @@ function renderSummary(){
 }
 const SUP='⁰¹²³⁴⁵⁶⁷⁸⁹';
 function renderCombos(){
-  let n=1;categoryDefinitions.forEach(d=>n*=poolFor(d).length);n*=poolFor(wildDefinition).length+1;
+  let n=1;categoryDefinitions.forEach(d=>n*=poolFor(d,true).length);n*=poolFor(wildDefinition,true).length+1;
   const e=Math.floor(Math.log10(n)),m=(n/Math.pow(10,e)).toFixed(1);
   document.getElementById('combos').textContent=`${m} × 10${String(e).split('').map(c=>SUP[+c]).join('')}`;
 }
 function renderSaved(){const root=document.getElementById('savedList');document.getElementById('savedCount').textContent=`(${savedContainers.length})`;if(!savedContainers.length){root.innerHTML='<p class="empty">Nothing saved yet. Generate a container you like, then save it.</p>';return}root.innerHTML=savedContainers.map((s,i)=>{const entries=activeEntries(s.values);if(s.values.wild?.use)entries.push([wildDefinition,s.values.wild.value]);return `<article class="saved-item"><div class="saved-head"><strong>Container ${savedContainers.length-i}</strong><small>${new Date(s.created).toLocaleDateString()}</small></div><ul>${entries.map(([d,v])=>`<li><b>${esc(d.code)}</b>${esc(v)}</li>`).join('')}</ul><div class="row"><button class="key" data-saved="copy" data-id="${s.id}" type="button">Copy</button><button class="key" data-saved="load" data-id="${s.id}" type="button">Load</button><button class="key danger" data-saved="delete" data-id="${s.id}" type="button">Delete</button></div></article>`}).join('')}
 function renderLibrary(){const id=document.getElementById('libraryCategory').value||'source';const d=[...categoryDefinitions,wildDefinition].find(x=>x.id===id);const q=document.getElementById('libraryFilter').value.trim().toLowerCase();const built=d.items.map(value=>({value,custom:false}));const custom=(customOptions[id]||[]).map(value=>({value,custom:true}));const all=[...built,...custom].filter(x=>x.value.toLowerCase().includes(q));document.getElementById('libraryMeta').textContent=`${all.length} shown · ${d.items.length} built in · ${custom.length} custom`;document.getElementById('libraryList').innerHTML=all.map(x=>`<li>${esc(x.value)}${x.custom?` <span class="badge">Custom</span> <button type="button" class="delete-custom" data-delete-custom="${esc(x.value)}" aria-label="Delete custom option ${esc(x.value)}">Delete</button>`:''}</li>`).join('')||'<li class="empty">No matches.</li>'}
-function renderAll(){renderCards();renderSummary();renderCombos()}
+function renderAll(){renderCards();renderSummary();renderChips();renderCombos();renderVerdicts()}
 function announce(message){const el=document.getElementById('status');el.textContent=message;clearTimeout(announce.timer);announce.timer=setTimeout(()=>{el.textContent=''},2600)}
 async function copyText(text,label='Copied.') {try{await navigator.clipboard.writeText(text)}catch{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}announce(label)}
 
@@ -356,12 +602,25 @@ async function copyText(text,label='Copied.') {try{await navigator.clipboard.wri
 // EVENTS
 // ============================================================
 document.addEventListener('change',e=>{const id=e.target.dataset.id,action=e.target.dataset.action;if(!id||!action)return;state[id][action==='use'?'use':'locked']=e.target.checked;renderAll()});
-document.addEventListener('click',e=>{const action=e.target.dataset.action,id=e.target.dataset.id;if(action==='reroll'){reroll(id);previousSignature=signature();renderAll();announce(`${id==='wild'?'Wild Card':([...categoryDefinitions].find(d=>d.id===id)?.label||'Variable')} rerolled.`)}const savedAction=e.target.dataset.saved;if(savedAction){const saved=savedContainers.find(s=>String(s.id)===e.target.dataset.id);if(!saved)return;if(savedAction==='copy')copyText(containerText(saved.values));if(savedAction==='load'){Object.keys(saved.values).forEach(k=>state[k]={...saved.values[k]});previousSignature=signature();renderAll();announce('Saved container loaded.');window.scrollTo({top:0,behavior:'smooth'})}if(savedAction==='delete'){savedContainers=savedContainers.filter(s=>s!==saved);persistSaved();renderSaved();announce('Saved container deleted.')}}if(e.target.dataset.deleteCustom){const cat=document.getElementById('libraryCategory').value;customOptions[cat]=(customOptions[cat]||[]).filter(v=>v!==e.target.dataset.deleteCustom);persistCustom();renderLibrary();renderCombos();announce('Custom option deleted.')}});
+document.addEventListener('click',e=>{const action=e.target.dataset.action,id=e.target.dataset.id;if(action==='reroll'){logReject(([...categoryDefinitions,wildDefinition].find(d=>d.id===id)||{}).code,state[id].value);reroll(id);if(cfg().resolve)resolveTensions();previousSignature=signature();renderAll();announce(`${id==='wild'?'Wild Card':([...categoryDefinitions].find(d=>d.id===id)?.label||'Variable')} rerolled.`)}const savedAction=e.target.dataset.saved;if(savedAction){const saved=savedContainers.find(s=>String(s.id)===e.target.dataset.id);if(!saved)return;if(savedAction==='copy')copyText(containerText(saved.values));if(savedAction==='load'){Object.keys(saved.values).forEach(k=>state[k]={...saved.values[k]});previousSignature=signature();renderAll();announce('Saved container loaded.');window.scrollTo({top:0,behavior:'smooth'})}if(savedAction==='delete'){savedContainers=savedContainers.filter(s=>s!==saved);persistSaved();renderSaved();announce('Saved container deleted.')}}if(e.target.dataset.deleteCustom){const cat=document.getElementById('libraryCategory').value;customOptions[cat]=(customOptions[cat]||[]).filter(v=>v!==e.target.dataset.deleteCustom);persistCustom();renderLibrary();renderCombos();announce('Custom option deleted.')}});
 document.getElementById('generate').addEventListener('click',()=>generate());document.getElementById('surprise').addEventListener('click',()=>generate({surprise:true}));
 document.getElementById('unlockAll').addEventListener('click',()=>{[...categoryDefinitions,wildDefinition].forEach(d=>state[d.id].locked=false);renderAll();announce('All variables unlocked.')});
 document.getElementById('useAll').addEventListener('click',()=>{categoryDefinitions.forEach(d=>state[d.id].use=true);renderAll();announce('All six core variables active.')});
 document.getElementById('copyContainer').addEventListener('click',()=>copyText(containerText()));document.getElementById('copyPrompt').addEventListener('click',()=>copyText(buildPrompt()));document.getElementById('save').addEventListener('click',saveContainer);
-document.addEventListener('keydown',e=>{if(e.code!=='Space'||e.repeat||e.altKey||e.ctrlKey||e.metaKey)return;const tag=document.activeElement?.tagName;if(['INPUT','TEXTAREA','SELECT','BUTTON','SUMMARY'].includes(tag)||document.activeElement?.isContentEditable)return;e.preventDefault();generate()});
+document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+document.querySelectorAll('.vk').forEach(b=>b.addEventListener('click',()=>setVerdict(b.dataset.verdict)));
+document.getElementById('exportJson').addEventListener('click',()=>{download(`ccp-log-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(log,null,2),'application/json');announce('JSON exported.')});
+document.getElementById('exportCsv').addEventListener('click',exportCsv);
+document.getElementById('clearLog').addEventListener('click',()=>{if(!log.length||!confirm(`Delete all ${log.length} log entries? Export first if you want to keep them.`))return;log=[];persistLog();renderLog();announce('Log cleared.')});
+const VERDICT_KEYS={Digit1:'no',Digit2:'keep',Digit3:'make',Digit4:'exists'};
+document.addEventListener('keydown',e=>{
+  if(e.repeat||e.altKey||e.ctrlKey||e.metaKey)return;
+  const tag=document.activeElement?.tagName;
+  if(['INPUT','TEXTAREA','SELECT'].includes(tag)||document.activeElement?.isContentEditable)return;
+  if(VERDICT_KEYS[e.code]){e.preventDefault();setVerdict(VERDICT_KEYS[e.code]);return}
+  if(e.code!=='Space'||['BUTTON','SUMMARY'].includes(tag))return;
+  e.preventDefault();generate();
+});
 const categorySelect=document.getElementById('libraryCategory');categorySelect.innerHTML=[...categoryDefinitions,wildDefinition].map(d=>`<option value="${d.id}">${esc(d.label)}</option>`).join('');categorySelect.addEventListener('change',renderLibrary);document.getElementById('libraryFilter').addEventListener('input',renderLibrary);
 document.getElementById('customForm').addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('customInput'),value=input.value.trim(),id=categorySelect.value;if(!value)return;const all=poolFor([...categoryDefinitions,wildDefinition].find(d=>d.id===id));if(all.some(v=>v.toLowerCase()===value.toLowerCase())){announce('That option already exists.');return}(customOptions[id]??=[]).push(value);persistCustom();input.value='';renderLibrary();renderCombos();announce('Custom option added.')});
 for(const details of document.querySelectorAll('details')){
@@ -370,7 +629,8 @@ for(const details of document.querySelectorAll('details')){
   details.addEventListener('toggle',()=>summary.setAttribute('aria-expanded',String(details.open)));
 }
 
-generate();renderSaved();renderLibrary();
+renderMode();generate();renderSaved();renderLibrary();renderLog();
+window.addEventListener('beforeunload',logSkipped);
 </script>
 </body>
 </html>
